@@ -3,6 +3,7 @@
 #include <cstdio>
 
 #include "block2d.hpp"
+#include "language.hpp"
 
 void print_solution(std::vector<int> solution);
 
@@ -17,26 +18,28 @@ int main(void) {
     char                selection;
     Block2D**           blocks;
 
+    setlocale(LC_ALL, "zh_CN.UTF-8");
+
     printf("+============================+\n");
     printf("|                            |\n");
-    printf("|    Genshin Block Solver    |\n");
+    printf(TXT_GENSHIN_SOLVER);
     printf("|                            |\n");
     printf("+============================+\n\n");
 
-    printf("Number of blocks: ");
+    printf(TXT_NUMBER_OF_BLOCKS);
     std::cin >> nblocks;
     blocks = new Block2D*[nblocks];
 
     for (int i = 0; i < nblocks; ++i) {
-        printf("\n=== Info for Block #%d ===\n", i + 1);
+        printf(TXT_INFO_FOR_BLOCK, i + 1);
 
         while (true) {
-            printf("  Init state: ");
+            printf(TXT_INIT_STATE);
             std::cin >> state;
 
             if (state < STATE_MIN || state > STATE_MAX) {
-                printf("\tError: illegal state!\n");
-                printf("\tPlease re-enter...\n");
+                printf(TXT_ERR_ILLEGAL_STATE);
+                printf(TXT_REENTER);
             }
             else {
                 break;
@@ -44,12 +47,12 @@ int main(void) {
         }
 
         while (true) {
-            printf("  Number of relative blocks: ");
+            printf(TXT_NUM_RELATIVE);
             std::cin >> nrelatives;
             
             if (nrelatives > nblocks) {
-                printf("\tError: relatives must no more than blocks!\n");
-                printf("\tPlease re-enter...\n");
+                printf(TXT_ERR_RELATIVE);
+                printf(TXT_REENTER);
             }
             else {
                 break;
@@ -60,12 +63,12 @@ int main(void) {
 
         for (int j = 0; j < nrelatives; ++j) {
             while (true) {
-                printf("\t(%d/%d) Relative block number: ", j + 1, nrelatives);
+                printf(TXT_RELATIVE_NUMBER, j + 1, nrelatives);
                 std::cin >> relatives[j];
 
                 if (relatives[j] > nblocks) {
-                    printf("\t\tError: relative number too large!\n");
-                    printf("\t\tPlease re-enter...\n");
+                    printf(TXT_ERR_RELATIVE_LARGE);
+                    printf(TXT_REENTER);
                 }
                 else {
                     --relatives[j];
@@ -78,19 +81,19 @@ int main(void) {
     }
 
     while (true) {
-        printf("\n Must Within how many steps: ");
+        printf(TXT_MUST_WITHIN);
         std::cin >> max_depth;
 
         if (max_depth > MAX_DEPTH_LIMIT) {
-            printf("\tError: max depth no more than %d!\n", MAX_DEPTH_LIMIT);
-            printf("\t\tPlease re-enter...\n");
+            printf(TXT_ERR_MAX_DEPTH, MAX_DEPTH_LIMIT);
+            printf(TXT_REENTER);
         }
         else {
             break;
         }
     }
 
-    printf("\nSolving...\n");
+    printf(TXT_SOLVING);
 
     Block2DSolver solver(nblocks, blocks);
 
@@ -99,11 +102,11 @@ int main(void) {
         int nsolutions = solutions.size();
 
         if (nsolutions == 0) {
-            printf("\tThe problem seems to be already solved.\n");
-            printf("\tCheck if teasure chests are around you.\n");
+            printf(TXT_ALREADY_SOLVED0);
+            printf(TXT_ALREADY_SOLVED1);
         }
         else {
-            printf("Found %d solutions.\n", nsolutions);
+            printf(TXT_FOUND_SOLUTIONS, nsolutions);
 
             int best_index = 0;
             // Find best.
@@ -113,10 +116,10 @@ int main(void) {
                 }
             }
 
-            printf("\n=== Best Solution ===\n");
+            printf(TXT_BEST_SOLUTION);
             print_solution(solutions[best_index]);
 
-            printf("Show other %d solutions? (Y/N): ", nsolutions - 1);
+            printf(TXT_SHOW_OTHER_SOLUTION, nsolutions - 1);
             std::cin >> selection;
 
             if (selection == 'y' || selection == 'Y') {
@@ -128,7 +131,7 @@ int main(void) {
                     const auto& solution = solutions[i];
 
                     // Another +1 to skip the best.
-                    printf("\n=== Solution #%d ===\n", i + 1 + 1);
+                    printf(TXT_SOLUTION_NUM, i + 1 + 1);
                     print_solution(solution);
                 } // for
             }
@@ -136,8 +139,7 @@ int main(void) {
         } // else
     }
     else {
-        printf("\tUnable to solve this problem\n" \
-               "\tin a maximum %d steps.", max_depth);
+        printf(TXT_UNABLE_SOLVE0 TXT_UNABLE_SOLVE1, max_depth);
     }
 
     system("pause");
@@ -145,8 +147,8 @@ int main(void) {
 }
 
 void print_solution(std::vector<int> solution) {
-    printf("Solved in %d steps:\n", solution.size());
+    printf(TXT_SOLVED_IN, solution.size());
     for (int block_index : solution) {
-        printf("\tHit block #%d\n", block_index + 1);
+        printf(TXT_HIT_BLOCK, block_index + 1);
     }
 }
