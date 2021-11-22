@@ -3,29 +3,12 @@
 #include <stdio.h>
 
 
-/*
-Block2D::Block2D(int state, int n, ...):
-    m_state(state),
-    m_toggle_list_size(n) {
-    assert(state >= STATE_MIN 
-        && state <= STATE_MAX);
-
-        m_toggle_list = new int[n];
-        m_provided_list = false;
-
-        va_list vl;
-        va_start(vl, n);
-        for (int i = 0; i < n; ++i) {
-            m_toggle_list[i] = va_arg(vl, int);
-        }
-        va_end(vl);
-}
-*/
-
-Block2D::Block2D(int state, int n, int* toggle_list):
+Block2D::Block2D(int state, int n, int* toggle_list, int state_min, int state_max):
     m_state(state),
     m_toggle_list_size(n),
-    m_toggle_list(toggle_list) {
+    m_toggle_list(toggle_list),
+    m_state_min(state_min),
+    m_state_max(state_max) {
     m_provided_list = true;
 }
 
@@ -37,15 +20,15 @@ Block2D::~Block2D() {
 }
 
 int Block2D::enter_next_state() {
-    if (++m_state > STATE_MAX) {
-        m_state = STATE_MIN;
+    if (++m_state > m_state_max) {
+        m_state = m_state_min;
     }
     return m_state;
 }
 
 int Block2D::back_to_last_state() {
-    if (--m_state < STATE_MIN) {
-        m_state = STATE_MAX;
+    if (--m_state < m_state_min) {
+        m_state = m_state_max;
     }
     return m_state;
 }
@@ -66,6 +49,13 @@ int Block2D::state() const {
     return m_state;
 }
 
+void Block2D::set_state_max(int state_max) {
+    this->m_state_max = state_max;
+}
+
+void Block2D::set_state_min(int state_min) {
+    this->m_state_min = state_min;
+}
 
 /*
 Block2DSolver::Block2DSolver(std::vector<int>&& out_record, int n, ...):
@@ -82,9 +72,10 @@ Block2DSolver::Block2DSolver(std::vector<int>&& out_record, int n, ...):
 }
 */
 
-Block2DSolver::Block2DSolver(int n, Block2D** p_blocks):
+Block2DSolver::Block2DSolver(int n, Block2D** p_blocks, int target_state):
     n(n),
-    p_blocks(p_blocks) { 
+    p_blocks(p_blocks),
+    m_target_state(target_state) { 
     
 }
 
@@ -94,7 +85,7 @@ Block2DSolver::~Block2DSolver() {
 
 bool Block2DSolver::is_solved() {
     for (int i = 0; i < n; ++i) {
-        if (p_blocks[i]->state() != STATE_MAX) {
+        if (p_blocks[i]->state() != m_target_state) {
             return false;
         }
     }

@@ -5,8 +5,6 @@
 #define OUT
 #endif
 
-constexpr int STATE_MAX = 3;
-constexpr int STATE_MIN = 1;
 
 class Block2D {
 protected:
@@ -14,10 +12,16 @@ protected:
     int* m_toggle_list;
     int m_toggle_list_size;
     bool m_provided_list;
+    int m_state_max;
+    int m_state_min;
 
 public:
-    // explicit Block2D(int state, int n, ...);
-    explicit Block2D(int state, int n, int* toggle_list);
+    explicit Block2D(
+        int state, 
+        int n, int* toggle_list, 
+        int state_min, 
+        int state_max
+    );
     virtual ~Block2D();
 
     int enter_next_state();
@@ -25,19 +29,22 @@ public:
     void toggle(Block2D** p_blocks);
     void backward(Block2D** p_blocks);
     int state() const;
+
+    void set_state_max(int state_max);
+    void set_state_min(int state_min);
 };
 
 class Block2DSolver {
 protected:
     Block2D** p_blocks;
     int n;
+    int m_target_state;
 
     std::vector<int> m_record;
     std::vector<std::vector<int> > m_solutions;
 
 public:
-    // explicit Block2DSolver(std::vector<int>&& out_record, int n, ...);
-    explicit Block2DSolver(int n, Block2D** p_blocks);
+    explicit Block2DSolver(int n, Block2D** p_blocks, int target_state);
     virtual ~Block2DSolver();
 
     bool is_solved();

@@ -5,11 +5,31 @@
 #include "block2d.hpp"
 #include "language.hpp"
 
+#define PROMPT_FOR(obj, prompt, condition, fail_alert) \
+    while (true) { \
+        (prompt); \
+        std::cin >> (obj); \
+        if (!(condition)) { \
+            (fail_alert); \
+            printf(TXT_REENTER); \
+        } \
+        else { \
+            break; \
+        } \
+    }
+
+#define PROMPT_FOR_UNCHECK(obj, prompt) \
+    PROMPT_FOR(obj, prompt, true, nullptr)
+
+
 void print_solution(std::vector<int> solution);
 
 int main(void) {
     constexpr int       MAX_DEPTH_LIMIT = 7;
 
+    int                 state_min;
+    int                 state_max;
+    int                 state_target;
     int                 nblocks;
     int                 max_depth;
     int                 state;
@@ -26,76 +46,71 @@ int main(void) {
     printf("|                            |\n");
     printf("+============================+\n\n");
 
-    printf(TXT_NUMBER_OF_BLOCKS);
-    std::cin >> nblocks;
+    PROMPT_FOR(
+        nblocks, printf(TXT_NUMBER_OF_BLOCKS),
+        nblocks > 0,
+        printf(TXT_ERR_BLOCKS)
+    );
+
+    PROMPT_FOR_UNCHECK(
+        state_min, printf(TXT_STATE_MIN)
+    );
+
+    PROMPT_FOR(
+        state_max, printf(TXT_STATE_MAX),
+        state_max >= state_min,
+        printf(TXT_ERR_MAX_MIN)
+    );
+
+    PROMPT_FOR(
+        state_target, printf(TXT_STATE_TARGET),
+        state_target >= state_min && state_target <= state_max,
+        printf(TXT_ERR_TARGET)
+    );
+    
     blocks = new Block2D*[nblocks];
 
     for (int i = 0; i < nblocks; ++i) {
         printf(TXT_INFO_FOR_BLOCK, i + 1);
 
-        while (true) {
-            printf(TXT_INIT_STATE);
-            std::cin >> state;
+        PROMPT_FOR(
+            state, printf(TXT_INIT_STATE), 
+            state >= state_min && state <= state_max,
+            printf(TXT_ERR_ILLEGAL_STATE)
+        );
 
-            if (state < STATE_MIN || state > STATE_MAX) {
-                printf(TXT_ERR_ILLEGAL_STATE);
-                printf(TXT_REENTER);
-            }
-            else {
-                break;
-            }
-        }
-
-        while (true) {
-            printf(TXT_NUM_RELATIVE);
-            std::cin >> nrelatives;
-            
-            if (nrelatives > nblocks) {
-                printf(TXT_ERR_RELATIVE);
-                printf(TXT_REENTER);
-            }
-            else {
-                break;
-            }
-        }
+        PROMPT_FOR(
+            nrelatives, printf(TXT_NUM_RELATIVE), 
+            nrelatives <= nblocks,
+            printf(TXT_ERR_RELATIVE)
+        );
 
         relatives = new int[nrelatives];
 
         for (int j = 0; j < nrelatives; ++j) {
-            while (true) {
-                printf(TXT_RELATIVE_NUMBER, j + 1, nrelatives);
-                std::cin >> relatives[j];
-
-                if (relatives[j] > nblocks) {
-                    printf(TXT_ERR_RELATIVE_LARGE);
-                    printf(TXT_REENTER);
-                }
-                else {
-                    --relatives[j];
-                    break;
-                }
-            }
+            PROMPT_FOR(
+                relatives[j], printf(TXT_RELATIVE_NUMBER, j + 1, nrelatives), 
+                relatives[j] <= nblocks,
+                printf(TXT_ERR_RELATIVE_LARGE)
+            );
+            --relatives[j];
         }
 
-        blocks[i] = new Block2D(state, nrelatives, relatives);
+        blocks[i] = new Block2D(
+            state, nrelatives, relatives,
+            state_min, state_max
+        );
     }
 
-    while (true) {
-        printf(TXT_MUST_WITHIN);
-        std::cin >> max_depth;
-
-        if (max_depth > MAX_DEPTH_LIMIT) {
-            printf(TXT_ERR_MAX_DEPTH, MAX_DEPTH_LIMIT);
-            printf(TXT_REENTER);
-        }
-        else {
-            break;
-        }
-    }
-
+    PROMPT_FOR(
+        max_depth, printf(TXT_MUST_WITHIN),
+        max_depth <= MAX_DEPTH_LIMIT,
+        printf(TXT_ERR_MAX_DEPTH, MAX_DEPTH_LIMIT)
+    );
+    
     printf(TXT_SOLVING);
 
-    Block2DSolver solver(nblocks, blocks);
+    Block2DSolver solver(nblocks, blocks, state_target);
 
     if (solver.try_solve(max_depth)) {
         const auto& solutions = solver.solutions();
@@ -119,29 +134,35 @@ int main(void) {
             printf(TXT_BEST_SOLUTION);
             print_solution(solutions[best_index]);
 
-            printf(TXT_SHOW_OTHER_SOLUTION, nsolutions - 1);
-            std::cin >> selection;
+            // More solutions?
+            if (nsolutions > 1) {
+                printf(TXT_SHOW_OTHER_SOLUTION, nsolutions - 1);
+                std::cin >> selection;
 
-            if (selection == 'y' || selection == 'Y') {
-                for (int i = 0; i < nsolutions; ++i) {
-                    if (i == best_index) {
-                        continue;
-                    }
+                if (selection == 'y' || selection == 'Y') {
+                    for (int i = 0; i < nsolutions; ++i) {
+                        if (i == best_index) {
+                            continue;
+                        }
 
-                    const auto& solution = solutions[i];
+                        const auto& solution = solutions[i];
 
-                    // Another +1 to skip the best.
-                    printf(TXT_SOLUTION_NUM, i + 1 + 1);
-                    print_solution(solution);
-                } // for
-            }
-
+                        // Another +1 to skip the best.
+                        printf(TXT_SOLUTION_NUM, i + 1 + 1);
+                        print_solution(solution);
+                    } // for
+                }
+            } // endif
         } // else
     }
     else {
         printf(TXT_UNABLE_SOLVE0 TXT_UNABLE_SOLVE1, max_depth);
     }
 
+    printf("\n");
+    system("pause");
+
+    printf(TXT_EXIT);
     system("pause");
     return 0;
 }
